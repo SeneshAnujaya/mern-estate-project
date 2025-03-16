@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import axios from 'axios';
+import Listingitem from "../components/Listingitem";
 
 const Search = () => {
   const [sidebardata, setSidebardata] = useState({
@@ -11,6 +13,8 @@ const Search = () => {
     sort: "created_at",
     order: "desc",
   });
+  const [loading, setLoading] = useState(false);
+  const [listings, setListings] = useState([])
 
   const navigate = useNavigate();
 
@@ -44,7 +48,18 @@ const Search = () => {
       });
     }
 
-    console.log(searchTermFromUrl);
+    const fetchListings = async () => {
+      setLoading(true)
+      const searchQuery = urlParams.toString();
+      const res = await axios.get(`/api/listing/get?${searchQuery}`)
+      const data = res.data;
+      setListings(data)
+      setLoading(false)
+    
+      
+    };
+
+    fetchListings();
   }, [location.search]);
 
   const handleChange = (e) => {
@@ -97,8 +112,6 @@ const Search = () => {
     urlParams.set("order", sidebardata.order);
     const searchQuery = urlParams.toString();
     navigate(`/search?${searchQuery}`);
-
-    console.log(searchQuery);
   };
 
   return (
@@ -201,10 +214,21 @@ const Search = () => {
           </button>
         </form>
       </div>
-      <div className="">
+      <div className="flex-1">
         <h1 className="text-3xl font-semibold border-b p-3 text-slate-700 mt-5">
           Listing results:
         </h1>
+        <div className="p-7 flex gap-4 flex-wrap">
+          {!loading && listings.length === 0 && (
+            <p className="text-xl text-slate-700">No listing found!</p>
+          )}
+          {loading && (
+            <p className="text-xl text-slate-700 text-center w-full">Loading...</p>
+          )}
+          {!loading && listings && listings.map((listing) => (
+            <Listingitem key={listing._id} listing={listing}/>
+          ))}
+        </div>
       </div>
     </div>
   );
